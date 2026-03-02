@@ -1,7 +1,7 @@
 ---
 name: User-story
 about: user requirements for functionality
-title: '[US] Назва функціональності'
+title: "[US] Назва функціональності"
 labels: user-story
 assignees: mila130106
 
