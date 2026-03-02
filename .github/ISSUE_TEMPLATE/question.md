@@ -1,13 +1,12 @@
 ---
 name: Question
 about: Further information is requested
-title: ''
+title: '[QUESTION] Уточнення вимоги: "Текст вимоги коротко..."'
 labels: question
 assignees: mila130106
 
 ---
 
-Title: [QUESTION] Уточнення вимоги: "Текст вимоги коротко..."
 Labels: question
 
 ## Оригінальна вимога
