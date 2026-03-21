@@ -2,7 +2,7 @@
 name: bug
 about: Помилки функціоналу або розбіжності з вимогами
 title: Короткий опис проблеми
-labels: bug
+labels: bug, test-design
 assignees: mila130106
 
 ---
