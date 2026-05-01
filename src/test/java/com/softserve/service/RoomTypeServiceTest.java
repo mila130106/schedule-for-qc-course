@@ -202,4 +202,96 @@ class RoomTypeServiceTest {
         verify(roomTypeRepository, times(1)).findById(1L);
         verify(roomTypeRepository, never()).delete(any(RoomType.class));
     }
+
+    // Additional tests for edge cases and negative scenarios
+    @Test
+    void getAllRoomTypesWithEmptyResult() {
+        // Arrange
+        List<RoomType> emptyRoomTypes = List.of();
+        List<RoomTypeDTO> emptyRoomTypeDTOs = List.of();
+
+        when(roomTypeRepository.getAll()).thenReturn(emptyRoomTypes);
+        when(roomTypeMapper.roomTypesToRoomTypeDTOs(emptyRoomTypes)).thenReturn(emptyRoomTypeDTOs);
+
+        // Act
+        List<RoomTypeDTO> result = roomTypeService.getAll();
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(0, result.size());
+        assertTrue(result.isEmpty());
+        verify(roomTypeRepository, times(1)).getAll();
+        verify(roomTypeMapper, times(1)).roomTypesToRoomTypeDTOs(emptyRoomTypes);
+    }
+
+    @Test
+    void saveRoomTypeWithFieldAlreadyExistsException_VerifySaveNotCalled() {
+        // Arrange
+        RoomTypeDTO inputDTO = new RoomTypeDTO();
+        inputDTO.setDescription("Existing Lecture Hall");
+
+        when(roomTypeRepository.countRoomTypesWithDescription("Existing Lecture Hall")).thenReturn(1L);
+
+        // Act & Assert
+        assertThrows(FieldAlreadyExistsException.class, () -> roomTypeService.save(inputDTO));
+
+        // Verify that save was never called
+        verify(roomTypeRepository, times(1)).countRoomTypesWithDescription("Existing Lecture Hall");
+        verify(roomTypeMapper, never()).roomTypeDTOTRoomType(any(RoomTypeDTO.class));
+        verify(roomTypeRepository, never()).save(any(RoomType.class));
+        verify(roomTypeMapper, never()).roomTypeToRoomTypeDTO(any(RoomType.class));
+    }
+
+    @Test
+    void deleteByIdWithEntityNotFoundException_VerifyDeleteNotCalled() {
+        // Arrange
+        Long nonExistentId = 999L;
+        when(roomTypeRepository.findById(nonExistentId)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        assertThrows(EntityNotFoundException.class, () -> roomTypeService.deleteById(nonExistentId));
+
+        // Verify that delete was never called
+        verify(roomTypeRepository, times(1)).findById(nonExistentId);
+        verify(roomTypeRepository, never()).delete(any(RoomType.class));
+    }
+
+    @Test
+    void getAllRoomTypesMultipleResults() {
+        // Arrange
+        RoomType roomType2 = new RoomType();
+        roomType2.setId(2L);
+        roomType2.setDescription("Seminar Room");
+
+        RoomType roomType3 = new RoomType();
+        roomType3.setId(3L);
+        roomType3.setDescription("Lab Room");
+
+        List<RoomType> roomTypes = List.of(roomType, roomType2, roomType3);
+
+        RoomTypeDTO roomTypeDTO2 = new RoomTypeDTO();
+        roomTypeDTO2.setId(2L);
+        roomTypeDTO2.setDescription("Seminar Room");
+
+        RoomTypeDTO roomTypeDTO3 = new RoomTypeDTO();
+        roomTypeDTO3.setId(3L);
+        roomTypeDTO3.setDescription("Lab Room");
+
+        List<RoomTypeDTO> roomTypeDTOs = List.of(roomTypeDTO, roomTypeDTO2, roomTypeDTO3);
+
+        when(roomTypeRepository.getAll()).thenReturn(roomTypes);
+        when(roomTypeMapper.roomTypesToRoomTypeDTOs(roomTypes)).thenReturn(roomTypeDTOs);
+
+        // Act
+        List<RoomTypeDTO> result = roomTypeService.getAll();
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(3, result.size());
+        assertEquals(roomTypeDTO.getDescription(), result.get(0).getDescription());
+        assertEquals(roomTypeDTO2.getDescription(), result.get(1).getDescription());
+        assertEquals(roomTypeDTO3.getDescription(), result.get(2).getDescription());
+        verify(roomTypeRepository, times(1)).getAll();
+        verify(roomTypeMapper, times(1)).roomTypesToRoomTypeDTOs(roomTypes);
+    }
 }

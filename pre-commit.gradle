@@ -1,7 +1,9 @@
 task installGitHook(type: Copy) {
     from new File(projectDir, 'scripts/pre-commit')
     into { new File(projectDir, '.git/hooks') }
-    fileMode 0777
+    filePermissions {
+        unix("rwxr-xr-x")
+    }
 }
 
 build.dependsOn installGitHook

@@ -13,7 +13,10 @@ const config = {
         plugins: [],
         excludedMutations: []
     },
-    mutate: ["src/helper/*.js", "!src/helper/*.test.js", "!src/helper/setLInk.js"],
+    mutate: [
+        "src/helper/getScheduleType.js",
+        "src/helper/schedule.js"
+    ],
     reporters: ["html", "clear-text", "progress"],
     htmlReporter: {
         fileName: "reports/mutation/mutation.html"

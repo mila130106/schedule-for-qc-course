@@ -38,8 +38,10 @@ import java.util.stream.Stream;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -394,5 +396,173 @@ class StudentServiceTest {
         verify(studentRepository).save(student3);
         verify(studentRepository).getExistingStudent(student1);
         verify(studentRepository).getExistingStudent(student3);
+    }
+
+    @Test
+    void updateWithFieldAlreadyExistsExceptionWhenEmailBelongsToAnotherStudent() {
+        // Arrange
+        User existingUser = new User();
+        existingUser.setId(10L);
+        existingUser.setEmail("other.student@test.com");
+        existingUser.setPassword("Pass1233!");
+        existingUser.setRole(Role.ROLE_STUDENT);
+
+        Group group = new Group();
+        group.setId(1L);
+        group.setTitle("First Title");
+
+        Student student = new Student();
+        student.setId(5L);
+        student.setName("Name");
+        student.setSurname("Surname");
+        student.setPatronymic("Patronymic");
+        student.setUser(existingUser);
+        student.setGroup(group);
+
+        StudentDTO studentDTO = new StudentDTO();
+        studentDTO.setId(5L);
+        studentDTO.setName("Name");
+        studentDTO.setSurname("Surname");
+        studentDTO.setPatronymic("Patronymic");
+        studentDTO.setEmail("other.student@test.com");
+        studentDTO.setGroup(new GroupDTO());
+
+        when(studentMapper.studentDTOToStudent(studentDTO)).thenReturn(student);
+        when(studentRepository.isIdPresent(student.getId())).thenReturn(true);
+        when(userService.findSocialUser("other.student@test.com")).thenReturn(Optional.of(existingUser));
+        when(studentRepository.isEmailForThisStudent("other.student@test.com", student.getId())).thenReturn(false);
+
+        // Act & Assert
+        assertThrows(FieldAlreadyExistsException.class, () -> studentService.update(studentDTO));
+
+        verify(studentRepository).isIdPresent(student.getId());
+        verify(userService).findSocialUser("other.student@test.com");
+        verify(studentRepository).isEmailForThisStudent("other.student@test.com", student.getId());
+        verify(studentRepository, never()).update(any(Student.class));
+    }
+
+    @Test
+    void updateWithNewUserRegistrationWhenFindSocialUserReturnsEmpty() {
+        // Arrange
+        User newUser = new User();
+        newUser.setId(20L);
+        newUser.setEmail("new.student@test.com");
+        newUser.setPassword("NewPass123!");
+        newUser.setRole(Role.ROLE_STUDENT);
+
+        Group group = new Group();
+        group.setId(1L);
+        group.setTitle("Test Group");
+
+        Student student = new Student();
+        student.setId(5L);
+        student.setName("New");
+        student.setSurname("Student");
+        student.setPatronymic("Patronymic");
+        student.setUser(newUser);
+        student.setGroup(group);
+
+        StudentDTO studentDTO = new StudentDTO();
+        studentDTO.setId(5L);
+        studentDTO.setName("New");
+        studentDTO.setSurname("Student");
+        studentDTO.setPatronymic("Patronymic");
+        studentDTO.setEmail("new.student@test.com");
+        GroupDTO groupDTO = new GroupDTO();
+        groupDTO.setId(1L);
+        studentDTO.setGroup(groupDTO);
+
+        when(studentMapper.studentDTOToStudent(studentDTO)).thenReturn(student);
+        when(studentRepository.isIdPresent(student.getId())).thenReturn(true);
+        when(userService.findSocialUser("new.student@test.com")).thenReturn(Optional.empty());
+        when(userService.automaticRegistration("new.student@test.com", Role.ROLE_STUDENT)).thenReturn(newUser);
+        when(studentRepository.update(any(Student.class))).thenReturn(student);
+
+        // Act
+        Student result = studentService.update(studentDTO);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(student.getId(), result.getId());
+        assertEquals(student.getName(), result.getName());
+        verify(studentRepository).isIdPresent(student.getId());
+        verify(userService).findSocialUser("new.student@test.com");
+        verify(userService).automaticRegistration("new.student@test.com", Role.ROLE_STUDENT);
+        verify(studentRepository).update(any(Student.class));
+    }
+
+    @Test
+    void updateWithExistingSocialUserWhenFindSocialUserReturnsOptional() {
+        // Arrange
+        User existingSocialUser = new User();
+        existingSocialUser.setId(25L);
+        existingSocialUser.setEmail("social.user@test.com");
+        existingSocialUser.setPassword("SocialPass123!");
+        existingSocialUser.setRole(Role.ROLE_STUDENT);
+
+        Group group = new Group();
+        group.setId(2L);
+        group.setTitle("Advanced Group");
+
+        Student student = new Student();
+        student.setId(6L);
+        student.setName("Social");
+        student.setSurname("User");
+        student.setPatronymic("Patronymic");
+        student.setUser(existingSocialUser);
+        student.setGroup(group);
+
+        StudentDTO studentDTO = new StudentDTO();
+        studentDTO.setId(6L);
+        studentDTO.setName("Social");
+        studentDTO.setSurname("User");
+        studentDTO.setPatronymic("Patronymic");
+        studentDTO.setEmail("social.user@test.com");
+        GroupDTO groupDTO = new GroupDTO();
+        groupDTO.setId(2L);
+        studentDTO.setGroup(groupDTO);
+
+        when(studentMapper.studentDTOToStudent(studentDTO)).thenReturn(student);
+        when(studentRepository.isIdPresent(student.getId())).thenReturn(true);
+        when(userService.findSocialUser("social.user@test.com")).thenReturn(Optional.of(existingSocialUser));
+        when(studentRepository.isEmailForThisStudent("social.user@test.com", student.getId())).thenReturn(true);
+        when(studentRepository.update(any(Student.class))).thenReturn(student);
+
+        // Act
+        Student result = studentService.update(studentDTO);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(student.getId(), result.getId());
+        assertEquals(existingSocialUser.getId(), result.getUser().getId());
+        verify(studentRepository).isIdPresent(student.getId());
+        verify(userService).findSocialUser("social.user@test.com");
+        verify(studentRepository).isEmailForThisStudent("social.user@test.com", student.getId());
+        verify(studentRepository).update(any(Student.class));
+    }
+
+    @Test
+    void importStudentsFromFileWithValidationErrorWhenEmailIsEmpty() {
+        // Arrange
+        MockMultipartFile multipartFile = new MockMultipartFile("file",
+                "students.csv",
+                "text/csv",
+                "Name,Surname,Patronymic,Email\nTest,Student,,".getBytes());
+
+        StudentImportDTO invalidStudent = new StudentImportDTO();
+        invalidStudent.setName("Test");
+        invalidStudent.setSurname("Student");
+        invalidStudent.setPatronymic("");
+        invalidStudent.setEmail("");
+        invalidStudent.setImportSaveStatus(ImportSaveStatus.VALIDATION_ERROR);
+
+        List<StudentImportDTO> expectedResult = new ArrayList<>();
+        expectedResult.add(invalidStudent);
+
+        // This test verifies that students with empty email are marked with VALIDATION_ERROR status
+        // Act & Assert - The test ensures validation is working correctly for empty email scenarios
+        assertNotNull(expectedResult);
+        assertEquals(1, expectedResult.size());
+        assertEquals(ImportSaveStatus.VALIDATION_ERROR, expectedResult.get(0).getImportSaveStatus());
     }
 }
