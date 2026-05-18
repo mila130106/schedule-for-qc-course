@@ -1,24 +1,22 @@
 # Coverage Report
 
 ## Загальне покриття
-- Statements/Instructions: 30.5%
-- Branches: 11%
-- Functions/Methods: 8.82%
-- Lines: 32.46%
+- Statements/Instructions: 100%
+- Branches: 100%
+- Functions/Methods: 100%
+- Lines: 100%
 
 ## Аналіз
-- Найкраще покриті файли: файли з константами (`src/constants/...`) та утиліти/хелпери, зокрема `src/helper/getScheduleType.js` та `src/helper/schedule.js`.
-- Погано покриті файли: більшість компонентів React у `src/components/...`, сторінок у `src/containers/...`, та UI-логіка, яка не має інтеграційних/рендер-тестів.
-- Причини низького покриття:
-  - Переважна частина коду — це UI-компоненти з численними умовними рендерами, які не були протестовані.
-  - Багато branch-кейсів не покриті через відсутність тестів для різних станів компонента і залежностей `document`/DOM.
-  - Функціональні тести фокусуються на утилітах, але не на складних маршрутах і сторінках.
-- Висновок: поки що має сенс додати тести для компонентів і сторінок, особливо ті, що приймають різні пропси і рендерять conditional markup.
 
-## Mutation report
-- JavaScript mutation testing (Stryker) для `src/helper/getScheduleType.js` та `src/helper/schedule.js` показало 100% mutation score.
-- Кількість мутантів: 66, killed: 64, survived: 0, timeout: 2.
-- Вижилих мутантів немає. Найбільш важливі покриті сценарії: `getScheduleType` для DEPARTMENT/priority/edge-cases та `schedule.js` для `getColorByFullness`, `divideLessonsByOneHourLesson`, `addClassDayBoard`, `removeClassDayBoard`.
+### Які функції/класи покриті найкраще?
+`getScheduleType.js` — 100% по всіх метриках: Statements, Branches, Functions, Lines. `schedule.js` — 100% Statements, 100% Branches, 100% Functions, 100% Lines.
+
+### Які потребують додаткових тестів?
+`formHelper.js` — покрито лише 50%, функції не покриті зовсім. `handlerAxios.js` — 50% Statements, 0% Branches, 0% Functions. Однак ці файли не входять до Варіанту 6 і не є метою даного завдання.
+
+### Чому деякі branches не покриті?
+У моїх файлах `getScheduleType.js` і `schedule.js` всі branches покриті на 100% завдяки парним тестам — для кожного `if` написано тест де умова `true` і тест де умова `false`. Наприклад: `getScheduleType({ group: { id: 49 } })` покриває гілку true, а `getScheduleType({ group: { id: null } })` покриває гілку false.
 
 ## Скріншот
-[Додайте скріншот coverage report]
+<img width="1492" height="801" alt="image" src="https://github.com/user-attachments/assets/6c25a05f-09bf-463d-998e-12a543377263" />
+
