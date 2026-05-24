@@ -19,4 +19,4 @@
 
 ## Скріншот
 <img width="1492" height="801" alt="image" src="https://github.com/user-attachments/assets/6c25a05f-09bf-463d-998e-12a543377263" />
-
+![alt text](image-1.png)
